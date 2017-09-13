@@ -1,0 +1,25 @@
+{
+  "name": "react-native-android-location-heartbeat",
+  "version": "1.0.0",
+  "description": "Get location from android on interval in react-native",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BoTreeConsultingTeam/react-native-android-location-heartbeat.git"
+  },
+  "keywords": [
+    "react",
+    "native",
+    "android",
+    "location"
+  ],
+  "author": "Botree",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BoTreeConsultingTeam/react-native-android-location-heartbeat/issues"
+  },
+  "homepage": "https://github.com/BoTreeConsultingTeam/react-native-android-location-heartbeat#readme"
+}
