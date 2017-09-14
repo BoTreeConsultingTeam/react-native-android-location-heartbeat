@@ -15,6 +15,7 @@ import android.content.BroadcastReceiver;
 import com.facebook.react.bridge.*;
 import android.content.Context;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import android.widget.Toast;
 
 public class LocationHeartBeatModule extends ReactContextBaseJavaModule {
   
@@ -30,9 +31,9 @@ public class LocationHeartBeatModule extends ReactContextBaseJavaModule {
   }
  
   @ReactMethod
-  public void startLocationHeartBeat(final int interval, Callback successCallback, Callback errorCallback) {
-
+  public void startLocationHeartBeat(final int interval) {
     if(receiver == null) {
+      // Toast.makeText(getReactApplicationContext(), "Start  inside", Toast.LENGTH_LONG).show();
       receiver = new LocationHeartBeatReceiver(getReactApplicationContext());
       IntentFilter intentFilter = new IntentFilter();
       intentFilter.addAction("START_MONITOR_LOCATION");
@@ -47,10 +48,11 @@ public class LocationHeartBeatModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void stopLocationHeartBeat(Callback successCallback, Callback errorCallback) {
+  public void stopLocationHeartBeat() {
     if(receiver != null) {
       Intent stopMonitorIntent = new Intent("STOP_MONITOR_LOCATION");
       getReactApplicationContext().sendBroadcast(stopMonitorIntent);
+      receiver = null;
     }
   }
 
@@ -65,7 +67,9 @@ public class LocationHeartBeatModule extends ReactContextBaseJavaModule {
 
       // This method call when number of wifi connections changed
       public void onReceive(Context c, Intent intent) {
+        // Toast.makeText(c, "OnReceive", Toast.LENGTH_LONG).show();
         if(intent.getAction().equals("MONITOR_LOCATION")) {
+        // Toast.makeText(c, "MONITOR_LOCATION", Toast.LENGTH_LONG).show();
 
           try {
             Map<String, String> map = new HashMap<String, String>();
@@ -78,7 +82,7 @@ public class LocationHeartBeatModule extends ReactContextBaseJavaModule {
             return;
           }
         } else if(intent.getAction().equals("START_MONITOR_LOCATION")){
-
+        // Toast.makeText(c, "START_MONITOR_LOCATION", Toast.LENGTH_LONG).show();
           try {
             Intent recIntent = new Intent(c, LocationHeartBeatService.class);
             recIntent.putExtra("INTERVAL" , intent.getIntExtra("INTERVAL", 5));
@@ -88,7 +92,7 @@ public class LocationHeartBeatModule extends ReactContextBaseJavaModule {
             return;
           }
         } else if(intent.getAction().equals("STOP_MONITOR_LOCATION")){
-
+        // Toast.makeText(c, "STOP_MONITOR_LOCATION", Toast.LENGTH_LONG).show();
           try {
             Intent recIntent = new Intent(c, LocationHeartBeatService.class);
             c.stopService(recIntent);

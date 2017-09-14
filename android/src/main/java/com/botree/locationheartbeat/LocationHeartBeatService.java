@@ -8,7 +8,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
-
+import android.location.LocationProvider;
 import java.util.Locale;
 import android.widget.Toast;
 /**
@@ -18,7 +18,7 @@ import android.widget.Toast;
 public class LocationHeartBeatService extends Service {
     private static final String TAG = "LocationHeartBeatService";
     private LocationManager mLocationManager = null;
-    private static int LOCATION_INTERVAL = 60000;
+    private static final int LOCATION_INTERVAL = 60000 * 5;
     private static final float LOCATION_DISTANCE = 0;
 
 
@@ -32,7 +32,7 @@ public class LocationHeartBeatService extends Service {
 
         @Override
         public void onLocationChanged(Location location) {
-           // Toast.makeText(MyLocationService.this, "onLocationChanged: " + location, Toast.LENGTH_LONG).show();
+           // Toast.makeText(LocationHeartBeatService.this, "onLocationChanged: " + location, Toast.LENGTH_LONG).show();
             Intent intent = new Intent("MONITOR_LOCATION");
             intent.putExtra("Latitude", location.getLatitude());
             intent.putExtra("Longitude", location.getLongitude());
@@ -43,6 +43,10 @@ public class LocationHeartBeatService extends Service {
         @Override
         public void onProviderDisabled(String provider) {
             Log.e(TAG, "onProviderDisabled: " + provider);
+            // Intent intent = new Intent("MONITOR_LOCATION");
+            // intent.putExtra("Latitude", 0);
+            // intent.putExtra("Longitude", 0);
+            // sendBroadcast(intent);
         }
 
         @Override
@@ -53,6 +57,12 @@ public class LocationHeartBeatService extends Service {
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
             Log.e(TAG, "onStatusChanged: " + provider);
+            if(status == LocationProvider.OUT_OF_SERVICE || status == LocationProvider.TEMPORARILY_UNAVAILABLE) {
+                Intent intent = new Intent("MONITOR_LOCATION");
+                intent.putExtra("Latitude", 0);
+                intent.putExtra("Longitude", 0);
+                sendBroadcast(intent);
+            }
         }
     }
 
@@ -69,7 +79,8 @@ public class LocationHeartBeatService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.e(TAG, "onStartCommand");
-        LOCATION_INTERVAL = LOCATION_INTERVAL * intent.getIntExtra("INTERVAL", 5);
+        // Toast.makeText(LocationHeartBeatService.this, "onStartCommand " + intent.getIntExtra("INTERVAL", 5), Toast.LENGTH_LONG).show();
+        // LOCATION_INTERVAL = LOCATION_INTERVAL * intent.getIntExtra("INTERVAL", 5);
         super.onStartCommand(intent, flags, startId);
 
         return START_STICKY;
@@ -78,9 +89,27 @@ public class LocationHeartBeatService extends Service {
     @Override
     public void onCreate() {
         Log.e(TAG, "onCreate");
+        // Toast.makeText(LocationHeartBeatService.this, "onCreate", Toast.LENGTH_LONG).show();
         initializeLocationManager();
-        if (!startLocationByGps()){
-            startLocationByNetworkProvider();
+
+        try {
+            mLocationManager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                    mLocationListeners[1]);
+        } catch (java.lang.SecurityException ex) {
+            Log.i(TAG, "fail to request location update, ignore", ex);
+        } catch (IllegalArgumentException ex) {
+            Log.d(TAG, "network provider does not exist, " + ex.getMessage());
+        }
+
+        try {
+            mLocationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                    mLocationListeners[0]);
+        } catch (java.lang.SecurityException ex) {
+            Log.i(TAG, "fail to request location update, ignore", ex);
+        } catch (IllegalArgumentException ex) {
+            Log.d(TAG, "gps provider does not exist " + ex.getMessage());
         }
     }
 
@@ -88,6 +117,7 @@ public class LocationHeartBeatService extends Service {
     public void onDestroy() {
         Log.e(TAG, "onDestroy");
         super.onDestroy();
+        // Toast.makeText(LocationHeartBeatService.this, "onDestroy", Toast.LENGTH_LONG).show();
         if (mLocationManager != null) {
             for (LocationListener mLocationListener : mLocationListeners) {
                 try {
@@ -104,36 +134,6 @@ public class LocationHeartBeatService extends Service {
         if (mLocationManager == null) {
             mLocationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
         }
-    }
-
-
-    private boolean startLocationByGps(){
-        try {
-            mLocationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
-                    mLocationListeners[0]);
-            return true;
-        } catch (java.lang.SecurityException ex) {
-            Log.i(TAG, "fail to request location update, ignore", ex);
-        } catch (IllegalArgumentException ex) {
-            Log.d(TAG, "gps provider does not exist " + ex.getMessage());
-        }
-        return false;
-    }
-
-
-    private boolean startLocationByNetworkProvider(){
-        try {
-            mLocationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
-                    mLocationListeners[1]);
-            return true;
-        } catch (java.lang.SecurityException ex) {
-            Log.i(TAG, "fail to request location update, ignore", ex);
-        } catch (IllegalArgumentException ex) {
-            Log.d(TAG, "network provider does not exist, " + ex.getMessage());
-        }
-        return false;
     }
 
 }
